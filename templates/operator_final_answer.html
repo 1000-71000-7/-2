@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Отправка ответа{% endblock %}
+{% block content %}
+<nav class="navbar navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/operator">✉️ Отправка ответа</a>
+        <a href="/operator/appeals" class="btn btn-outline-light">
+            <i class="fas fa-arrow-left"></i> Назад
+        </a>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Отправка ответа по обращению #{{ appeal.registration_number or appeal.id }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <strong>Заявитель:</strong> {{ appeal.citizen_name }}<br>
+                        <strong>Email для отправки:</strong> {{ appeal.citizen_email or 'не указан' }}<br>
+                        <strong>Телефон:</strong> {{ appeal.citizen_phone or 'не указан' }}
+                    </div>
+
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label class="form-label">Текст ответа заявителю</label>
+                            <textarea name="resolution_text" class="form-control" rows="8" required
+                                      placeholder="Введите полный ответ на обращение...">{{ appeal.resolution_text or '' }}</textarea>
+                            <small class="text-muted">Ответ будет отправлен на email заявителя (если указан)</small>
+                        </div>
+
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-paper-plane"></i> Отправить ответ
+                        </button>
+                        <a href="/operator/appeals" class="btn btn-secondary">Отмена</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

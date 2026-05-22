@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои обращения</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .status-badge { font-size: 0.85rem; padding: 5px 10px; border-radius: 20px; }
+        .table-hover tbody tr:hover { background-color: #f5f5f5; cursor: pointer; }
+        .table td { vertical-align: middle; }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="fas fa-file-alt"></i> Мои обращения
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/client/appeal/add">
+                            <i class="fas fa-plus"></i> Новое обращение
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/public-appeals">
+                            <i class="fas fa-globe"></i> Публичные ответы
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/profile">
+                            <i class="fas fa-user"></i> {{ session.full_name or session.username }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-danger" href="/logout">
+                            <i class="fas fa-sign-out-alt"></i> Выйти
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-list"></i> Мои обращения</h5>
+                <span class="badge bg-light text-dark">{{ my_appeals|length }} всего</span>
+            </div>
+            <div class="card-body">
+                {% if my_appeals %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>№</th>
+                                    <th>Дата</th>
+                                    <th>Тип</th>
+                                    <th>Текст обращения</th>
+                                    <th>Статус</th>
+                                    <th>Исполнитель</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for appeal in my_appeals %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ appeal.reg_number or 'ОБ-'+appeal.id|string }}</strong>
+                                        {% if not appeal.is_registered %}
+                                            <br><small class="text-muted">ожидает регистрации</small>
+                                        {% endif %}
+                                    </div>
+                                    <td>{{ appeal.created_at.strftime('%d.%m.%Y') if appeal.created_at else '-' }}</div>
+                                    <td>
+                                        {% if appeal.type %}
+                                            {% if appeal.type.name == 'Жалоба' %}
+                                                <span class="text-danger"><i class="fas fa-exclamation-circle"></i></span>
+                                            {% elif appeal.type.name == 'Предложение' %}
+                                                <span class="text-success"><i class="fas fa-lightbulb"></i></span>
+                                            {% elif appeal.type.name == 'Вопрос' %}
+                                                <span class="text-info"><i class="fas fa-question-circle"></i></span>
+                                            {% else %}
+                                                <i class="fas fa-file-alt"></i>
+                                            {% endif %}
+                                            {{ appeal.type.name }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </div>
+                                    <td>
+                                        <a href="/client/appeal/{{ appeal.id }}" class="text-decoration-none">
+                                            {{ appeal.content[:70] }}{% if appeal.content|length > 70 %}...{% endif %}
+                                        </a>
+                                    </div>
+                                    <td>
+                                        {% if appeal.status %}
+                                            {% set status_colors = {
+                                                'Новое (не зарегистрировано)': 'secondary',
+                                                'Зарегистрировано': 'info',
+                                                'Назначено исполнителю': 'primary',
+                                                'Исполнено': 'success',
+                                                'Дан ответ заявителю': 'success',
+                                                'Отклонено': 'danger'
+                                            } %}
+                                            {% set status_icons = {
+                                                'Новое (не зарегистрировано)': 'fa-clock',
+                                                'Зарегистрировано': 'fa-check-circle',
+                                                'Назначено исполнителю': 'fa-user-check',
+                                                'Исполнено': 'fa-check-double',
+                                                'Дан ответ заявителю': 'fa-envelope',
+                                                'Отклонено': 'fa-times-circle'
+                                            } %}
+                                            <span class="badge bg-{{ status_colors.get(appeal.status.name, 'secondary') }} status-badge">
+                                                <i class="fas {{ status_icons.get(appeal.status.name, 'fa-info-circle') }}"></i>
+                                                {{ appeal.status.name }}
+                                            </span>
+                                            {% if appeal.status.name == 'Назначено исполнителю' and appeal.executor %}
+                                                <br><small class="text-muted">исполнитель: {{ appeal.executor }}</small>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-secondary">-</span>
+                                        {% endif %}
+                                    </div>
+                                    <td>
+                                        {% if appeal.executor %}
+                                            {{ appeal.executor }}
+                                        {% else %}
+                                            <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </div>
+                                    <td>
+                                        <a href="/client/appeal/{{ appeal.id }}" class="btn btn-sm btn-info" title="Просмотр">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </div>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Расширенная статистика -->
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <div class="alert alert-info">
+                                <div class="row text-center">
+                                    <div class="col-md-3">
+                                        <strong>📝 Всего:</strong> {{ my_appeals|length }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>🟡 Ожидают регистрации:</strong> {{ my_appeals|selectattr('is_registered', 'equalto', False)|list|length }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>🔵 В работе:</strong> {{ my_appeals|selectattr('status.name', 'in', ['Зарегистрировано', 'Назначено исполнителю'])|list|length }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>✅ Завершено:</strong> {{ my_appeals|selectattr('status.is_final', 'equalto', True)|list|length }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Информация о сроках -->
+                    <div class="alert alert-warning mt-3">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Обратите внимание:</strong> Срок рассмотрения обращений составляет до 30 дней.
+                        Статус обращения обновляется по мере его рассмотрения.
+                        {% if my_appeals|selectattr('is_registered', 'equalto', False)|list|length > 0 %}
+                            <br><span class="text-danger">⚠️ У вас есть обращения, ожидающие регистрации в администрации.</span>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                        <p class="lead">У вас пока нет обращений</p>
+                        <a href="/client/appeal/add" class="btn btn-primary btn-lg">
+                            <i class="fas fa-plus"></i> Создать первое обращение
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Добавляем возможность клика по строке для перехода к обращению
+        document.querySelectorAll('.table-hover tbody tr').forEach(row => {
+            row.style.cursor = 'pointer';
+            row.addEventListener('click', (e) => {
+                // Игнорируем клик по кнопке
+                if (!e.target.closest('.btn')) {
+                    const viewLink = row.querySelector('.btn-info');
+                    if (viewLink) {
+                        window.location.href = viewLink.href;
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

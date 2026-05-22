@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Отправка ответа заявителю</h2>
+    <div class="card">
+        <div class="card-body">
+            <h5>Обращение №{{ appeal.reg_number or appeal.id }}</h5>
+            <p><strong>Заявитель:</strong> {{ appeal.citizen_name }}</p>
+
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                <div class="mb-3">
+                    {{ form.final_answer_text.label(class="form-label") }}
+                    {{ form.final_answer_text(class="form-control", rows=6) }}
+                </div>
+                {{ form.submit(class="btn btn-success") }}
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

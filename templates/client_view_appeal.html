@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Просмотр обращения</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .comment-box {
+            background-color: #f8f9fa;
+            border-left: 3px solid #0d6efd;
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .status-badge {
+            font-size: 1rem;
+            padding: 8px 15px;
+            border-radius: 20px;
+        }
+        .resolution-box {
+            background-color: #d1e7dd;
+            border-left: 3px solid #198754;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        .final-answer-box {
+            background-color: #fff3cd;
+            border-left: 3px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #dee2e6;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 25px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -24px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #0d6efd;
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px #0d6efd;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="fas fa-file-alt"></i> Обращение #{{ appeal.reg_number or appeal.id }}
+            </a>
+            <div class="ms-auto">
+                <a href="/dashboard" class="btn btn-outline-light">
+                    <i class="fas fa-arrow-left"></i> Назад
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-8">
+                <!-- Информация об обращении -->
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-info-circle"></i> Информация об обращении</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-bordered">
+                            <tr>
+                                <th style="width: 180px;">Регистрационный номер:</th>
+                                <td>
+                                    <strong>{{ appeal.reg_number or 'Ожидает регистрации' }}</strong>
+                                    {% if not appeal.is_registered %}
+                                        <br><small class="text-muted">Обращение还未 зарегистрировано в администрации</small>
+                                    {% endif %}
+                                </div>
+                            </tr>
+                            <tr>
+                                <th>Дата создания:</th>
+                                <td>{{ appeal.created_at.strftime('%d.%m.%Y %H:%M') if appeal.created_at else appeal.appeal_date.strftime('%d.%m.%Y') }}</div>
+                            </tr>
+                            <tr>
+                                <th>Тип обращения:</th>
+                                <td>
+                                    {% if appeal.type %}
+                                        {% if appeal.type.name == 'Жалоба' %}
+                                            <span class="text-danger"><i class="fas fa-exclamation-circle"></i></span>
+                                        {% elif appeal.type.name == 'Предложение' %}
+                                            <span class="text-success"><i class="fas fa-lightbulb"></i></span>
+                                        {% elif appeal.type.name == 'Вопрос' %}
+                                            <span class="text-info"><i class="fas fa-question-circle"></i></span>
+                                        {% endif %}
+                                        {{ appeal.type.name }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </div>
+                            </tr>
+                            <tr>
+                                <th>Статус:</th>
+                                <td>
+                                    {% if appeal.status %}
+                                        {% set status_colors = {
+                                            'Новое (не зарегистрировано)': 'secondary',
+                                            'Зарегистрировано': 'info',
+                                            'Назначено исполнителю': 'primary',
+                                            'Исполнено': 'success',
+                                            'Дан ответ заявителю': 'success',
+                                            'Отклонено': 'danger'
+                                        } %}
+                                        {% set status_icons = {
+                                            'Новое (не зарегистрировано)': 'fa-clock',
+                                            'Зарегистрировано': 'fa-check-circle',
+                                            'Назначено исполнителю': 'fa-user-check',
+                                            'Исполнено': 'fa-check-double',
+                                            'Дан ответ заявителю': 'fa-envelope',
+                                            'Отклонено': 'fa-times-circle'
+                                        } %}
+                                        <span class="badge bg-{{ status_colors.get(appeal.status.name, 'secondary') }} status-badge">
+                                            <i class="fas {{ status_icons.get(appeal.status.name, 'fa-info-circle') }}"></i>
+                                            {{ appeal.status.name }}
+                                        </span>
+                                        {% if appeal.status.name == 'Назначено исполнителю' and appeal.executor %}
+                                            <br><small class="text-muted mt-1">Исполнитель: {{ appeal.executor }}</small>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge bg-secondary">-</span>
+                                    {% endif %}
+                                </div>
+                            </tr>
+                            <tr>
+                                <th>Текст обращения:</th>
+                                <td class="bg-light p-3">{{ appeal.content|replace('\n', '<br>')|safe }}</div>
+                            </tr>
+                            {% if appeal.notes %}
+                            <tr>
+                                <th>Примечания:</th>
+                                <td>{{ appeal.notes|replace('\n', '<br>')|safe }}</div>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Резолюции и назначения -->
+                {% if appeal.resolutions and appeal.resolutions|length > 0 %}
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-gavel"></i> Резолюции и назначения</h5>
+                    </div>
+                    <div class="card-body timeline">
+                        {% for resolution in appeal.resolutions %}
+                        <div class="timeline-item">
+                            <div class="d-flex justify-content-between mb-2">
+                                <strong>
+                                    <i class="fas fa-user-check"></i>
+                                    {{ resolution.author.full_name }}
+                                </strong>
+                                <small class="text-muted">
+                                    <i class="far fa-calendar-alt"></i>
+                                    {{ resolution.created_at.strftime('%d.%m.%Y %H:%M') }}
+                                </small>
+                            </div>
+                            <div class="resolution-box">
+                                <p class="mb-2"><strong>Резолюция:</strong> {{ resolution.text }}</p>
+                                {% if resolution.assigned_to %}
+                                <p class="mb-1">
+                                    <strong><i class="fas fa-user-tie"></i> Исполнитель:</strong>
+                                    {{ resolution.assigned_to.full_name }}
+                                </p>
+                                {% endif %}
+                                <p class="mb-0">
+                                    <strong><i class="fas fa-calendar-week"></i> Срок исполнения:</strong>
+                                    {{ resolution.deadline_days }} дней
+                                </p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Финальный ответ -->
+                {% if appeal.final_answer_text %}
+                <div class="card mb-3">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="fas fa-reply-all"></i> Официальный ответ администрации</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="final-answer-box">
+                            {{ appeal.final_answer_text|replace('\n', '<br>')|safe }}
+                            {% if appeal.final_answer_date %}
+                            <hr>
+                            <small class="text-muted">
+                                <i class="fas fa-calendar-alt"></i> Дата ответа: {{ appeal.final_answer_date.strftime('%d.%m.%Y') }}
+                            </small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Комментарии специалистов -->
+                {% if appeal.comments and appeal.comments|length > 0 %}
+                <div class="card mb-3">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="fas fa-comments"></i> Комментарии специалистов</h5>
+                    </div>
+                    <div class="card-body">
+                        {% for comment in appeal.comments %}
+                        <div class="comment-box">
+                            <div class="d-flex justify-content-between mb-2">
+                                <strong>
+                                    <i class="fas fa-user-circle"></i> {{ comment.user.full_name }}
+                                    <span class="badge bg-secondary ms-2">
+                                        {% if comment.user.role == 'admin' %}Администратор
+                                        {% elif comment.user.role == 'operator' %}Оператор
+                                        {% else %}Специалист{% endif %}
+                                    </span>
+                                </strong>
+                                <small class="text-muted">
+                                    <i class="far fa-clock"></i> {{ comment.created_at.strftime('%d.%m.%Y %H:%M') }}
+                                </small>
+                            </div>
+                            <p class="mb-0">{{ comment.comment|replace('\n', '<br>')|safe }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="col-md-4">
+                <!-- Информация о заявителе -->
+                <div class="card mb-3">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0"><i class="fas fa-user"></i> Информация о заявителе</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong><i class="fas fa-user"></i> ФИО:</strong><br>{{ appeal.citizen_name }}</p>
+                        {% if appeal.citizen_phone %}
+                        <p><strong><i class="fas fa-phone"></i> Телефон:</strong><br>{{ appeal.citizen_phone }}</p>
+                        {% endif %}
+                        {% if appeal.citizen_email %}
+                        <p><strong><i class="fas fa-envelope"></i> Email:</strong><br>{{ appeal.citizen_email }}</p>
+                        {% endif %}
+                        {% if appeal.citizen_address %}
+                        <p><strong><i class="fas fa-map-marker-alt"></i> Адрес:</strong><br>{{ appeal.citizen_address }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Информация об исполнителе -->
+                {% if appeal.executor %}
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-user-tie"></i> Исполнитель</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong><i class="fas fa-user"></i> ФИО:</strong><br>{{ appeal.executor }}</p>
+                        {% if appeal.resolution_date %}
+                        <p><strong><i class="fas fa-calendar-check"></i> Дата исполнения:</strong><br>
+                            {{ appeal.resolution_date.strftime('%d.%m.%Y') }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Системная информация -->
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0"><i class="fas fa-clock"></i> Системная информация</h5>
+                    </div>
+                    <div class="card-body">
+                        <small>
+                            <strong>Создано:</strong><br>
+                            {{ appeal.created_at.strftime('%d.%m.%Y %H:%M') if appeal.created_at else appeal.appeal_date.strftime('%d.%m.%Y') }}
+                        </small>
+                        <hr>
+                        {% if appeal.registered_at %}
+                        <small>
+                            <strong>Зарегистрировано:</strong><br>
+                            {{ appeal.registered_at.strftime('%d.%m.%Y %H:%M') }}
+                            {% if appeal.registered_by %}
+                            <br>({{ appeal.registered_by.full_name }})
+                            {% endif %}
+                        </small>
+                        <hr>
+                        {% endif %}
+                        <small>
+                            <strong>Последнее обновление:</strong><br>
+                            {% if appeal.updated_at %}
+                                {{ appeal.updated_at.strftime('%d.%m.%Y %H:%M') }}
+                            {% else %}
+                                {{ appeal.created_at.strftime('%d.%m.%Y %H:%M') if appeal.created_at else appeal.appeal_date.strftime('%d.%m.%Y') }}
+                            {% endif %}
+                        </small>
+                        {% if appeal.status and appeal.status.is_final and appeal.resolution_date %}
+                        <hr>
+                        <small>
+                            <strong>Дата завершения:</strong><br>
+                            {{ appeal.resolution_date.strftime('%d.%m.%Y') }}
+                        </small>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Кнопки действий -->
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="/dashboard" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Вернуться к списку
+                            </a>
+                            {% if not appeal.final_answer_text and appeal.status and not appeal.status.is_final %}
+                            <div class="alert alert-info mt-2 mb-0">
+                                <i class="fas fa-info-circle"></i>
+                                <small>Обращение находится в работе. Ожидайте ответа в течение 30 дней.</small>
+                            </div>
+                            {% elif appeal.final_answer_text %}
+                            <div class="alert alert-success mt-2 mb-0">
+                                <i class="fas fa-check-circle"></i>
+                                <small>Ответ на обращение подготовлен и направлен.</small>
+                            </div>
+                            {% elif appeal.status and appeal.status.name == 'Отклонено' %}
+                            <div class="alert alert-danger mt-2 mb-0">
+                                <i class="fas fa-times-circle"></i>
+                                <small>В рассмотрении обращения отказано.</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

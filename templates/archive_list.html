@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Архив обращений{% endblock %}
+{% block content %}
+<nav class="navbar navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/archive">📦 Архив обращений</a>
+        <a href="/operator" class="btn btn-outline-light">
+            <i class="fas fa-arrow-left"></i> Назад
+        </a>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0"><i class="fas fa-archive"></i> Архивированные обращения</h5>
+        </div>
+        <div class="card-body">
+            {% if archived_appeals %}
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead class="table-light">
+                        <tr>
+                            <th>№</th>
+                            <th>Заявитель</th>
+                            <th>Статус</th>
+                            <th>Дата архивации</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appeal in archived_appeals %}
+                        <tr>
+                            <td>{{ appeal.registration_number or appeal.id }}</td>
+                            <td>{{ appeal.citizen_name }}</td>
+                            <td>{{ appeal.status_name or '-' }}</td>
+                            <td>{{ appeal.archived_at.strftime('%d.%m.%Y') if appeal.archived_at else '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-archive fa-4x text-muted mb-3"></i>
+                <p class="lead">Архив пуст</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

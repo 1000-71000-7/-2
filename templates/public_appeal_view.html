@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Ответ на обращение{% endblock %}
+{% block content %}
+<nav class="navbar navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/">📄 Ответ на обращение</a>
+        <a href="/public-appeals" class="btn btn-outline-light">
+            <i class="fas fa-arrow-left"></i> Все ответы
+        </a>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Официальный ответ администрации</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6>Информация об обращении:</h6>
+                        <table class="table table-sm table-borderless">
+                            <tr><th style="width: 150px;">Регистрационный номер:</th><td>{{ appeal.registration_number }}</td></tr>
+                            <tr><th>Дата обращения:</th><td>{{ appeal.created_at.strftime('%d.%m.%Y') if appeal.created_at else '-' }}</td></tr>
+                            <tr><th>Тип обращения:</th><td>{{ appeal.type.name if appeal.type else '-' }}</td></tr>
+                            <tr class="text-muted"><th>Заявитель:</th><td>{{ appeal.citizen_name }}</td></tr>
+                        </table>
+                    </div>
+
+                    <div class="mb-4">
+                        <h6>Содержание обращения:</h6>
+                        <div class="border p-3 bg-light">
+                            {{ appeal.content|safe }}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h6>Ответ администрации:</h6>
+                        <div class="border p-3 bg-success bg-opacity-10 border-success">
+                            <i class="fas fa-check-circle text-success"></i>
+                            {{ appeal.resolution_text|safe }}
+                        </div>
+                        <small class="text-muted mt-2 d-block">
+                            Дата ответа: {{ appeal.response_sent_date.strftime('%d.%m.%Y') if appeal.response_sent_date else '-' }}
+                        </small>
+                    </div>
+
+                    <hr>
+                    <div class="text-center text-muted">
+                        <small>Данный ответ является официальным и имеет юридическую силу.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

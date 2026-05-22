@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% block title %}Регистрация обращения{% endblock %}
+{% block content %}
+<nav class="navbar navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/operator">📝 Регистрация обращения</a>
+        <a href="/operator/appeals" class="btn btn-outline-light">
+            <i class="fas fa-arrow-left"></i> Назад
+        </a>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-registered"></i> Регистрация обращения #{{ appeal.reg_number or appeal.id }}</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Информация об обращении -->
+                    <div class="alert alert-info">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-user"></i> Заявитель:</strong><br>
+                                {{ appeal.citizen_name }}
+                            </div>
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-calendar"></i> Дата создания:</strong><br>
+                                {{ appeal.created_at.strftime('%d.%m.%Y %H:%M') if appeal.created_at else appeal.appeal_date.strftime('%d.%m.%Y') }}
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-tag"></i> Тип обращения:</strong><br>
+                                <span class="badge bg-info">{{ appeal.type.name if appeal.type else '-' }}</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-phone"></i> Телефон:</strong><br>
+                                {{ appeal.citizen_phone or 'Не указан' }}
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <strong><i class="fas fa-file-alt"></i> Содержание:</strong><br>
+                            <div class="bg-white p-2 rounded" style="max-height: 100px; overflow-y: auto;">
+                                {{ appeal.content }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+
+                        <!-- Регистрационный номер -->
+                        <div class="mb-3">
+                            {{ form.reg_number.label(class="form-label required-field") }}
+                            <div class="input-group">
+                                <span class="input-group-text bg-primary text-white">
+                                    <i class="fas fa-hashtag"></i>
+                                </span>
+                                {{ form.reg_number(class="form-control", placeholder="ОБ-2024-00001") }}
+                            </div>
+                            {% for error in form.reg_number.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle"></i>
+                                Уникальный регистрационный номер. По этому номеру заявитель сможет отслеживать обращение.
+                            </small>
+                        </div>
+
+                        <!-- Автоматическая генерация номера -->
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="generateNumber()">
+                                <i class="fas fa-magic"></i> Сгенерировать автоматически
+                            </button>
+                            <small class="text-muted ms-2">Или введите вручную</small>
+                        </div>
+
+                        <hr>
+
+                        <!-- Резолюция / Поручение -->
+                        <div class="mb-3">
+                            {{ form.resolution_text.label(class="form-label") }}
+                            <div class="input-group">
+                                <span class="input-group-text bg-warning text-dark">
+                                    <i class="fas fa-gavel"></i>
+                                </span>
+                                {{ form.resolution_text(class="form-control", rows=4, placeholder="Укажите поручение, кому и что сделать...") }}
+                            </div>
+                            {% for error in form.resolution_text.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle"></i>
+                                Текст резолюции/поручения руководителя. Например: "Поручить отделу ЖКХ провести проверку..."
+                            </small>
+                        </div>
+
+                        <div class="row">
+                            <!-- Назначение исполнителя -->
+                            <div class="col-md-6 mb-3">
+                                {{ form.assigned_to.label(class="form-label") }}
+                                <div class="input-group">
+                                    <span class="input-group-text bg-success text-white">
+                                        <i class="fas fa-user-check"></i>
+                                    </span>
+                                    {{ form.assigned_to(class="form-select") }}
+                                </div>
+                                {% for error in form.assigned_to.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
+                                <small class="text-muted">Выберите ответственного исполнителя</small>
+                            </div>
+
+                            <!-- Срок исполнения -->
+                            <div class="col-md-6 mb-3">
+                                {{ form.deadline_days.label(class="form-label") }}
+                                <div class="input-group">
+                                    <span class="input-group-text bg-danger text-white">
+                                        <i class="fas fa-clock"></i>
+                                    </span>
+                                    {{ form.deadline_days(class="form-select") }}
+                                </div>
+                                {% for error in form.deadline_days.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
+                                <small class="text-muted">Срок, в который необходимо подготовить ответ</small>
+                            </div>
+                        </div>
+
+                        <!-- Дополнительная информация -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Приоритет</label>
+                                <select name="priority" class="form-select">
+                                    <option value="1">🔴 Высокий</option>
+                                    <option value="2" selected>🟡 Средний</option>
+                                    <option value="3">🟢 Низкий</option>
+                                </select>
+                                <small class="text-muted">Определяет срочность выполнения</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Уведомить исполнителя</label>
+                                <div class="form-check">
+                                    <input type="checkbox" name="notify_executor" class="form-check-input" checked>
+                                    <label class="form-check-label">
+                                        <i class="fas fa-envelope"></i> Отправить уведомление на email
+                                    </label>
+                                </div>
+                                <small class="text-muted">Исполнитель получит письмо с поручением</small>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Предпросмотр -->
+                        <div class="card mb-3">
+                            <div class="card-header bg-secondary text-white">
+                                <h6 class="mb-0"><i class="fas fa-eye"></i> Предпросмотр</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="preview" class="small">
+                                    <p><strong>Регистрационный номер:</strong> <span id="preview_number">—</span></p>
+                                    <p><strong>Поручение:</strong> <span id="preview_resolution">—</span></p>
+                                    <p><strong>Исполнитель:</strong> <span id="preview_executor">—</span></p>
+                                    <p><strong>Срок:</strong> <span id="preview_deadline">—</span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save"></i> Зарегистрировать и назначить
+                            </button>
+                            <a href="{{ url_for('operator_view_appeal', id=appeal.id) }}" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-times"></i> Отмена
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Автоматическая генерация регистрационного номера
+function generateNumber() {
+    const year = new Date().getFullYear();
+    const id = {{ appeal.id }};
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    const number = `ОБ-${year}-${random}`;
+    document.getElementById('reg_number').value = number;
+    updatePreview();
+}
+
+// Обновление предпросмотра
+function updatePreview() {
+    const number = document.getElementById('reg_number')?.value || '—';
+    const resolution = document.getElementById('resolution_text')?.value || '—';
+    const assignedTo = document.getElementById('assigned_to');
+    const executor = assignedTo?.options[assignedTo.selectedIndex]?.text.split(' - ')[0] || '—';
+    const deadline = document.getElementById('deadline_days');
+    const deadlineText = deadline?.options[deadline.selectedIndex]?.text || '—';
+
+    document.getElementById('preview_number').textContent = number;
+    document.getElementById('preview_resolution').textContent = resolution.length > 100 ? resolution.substring(0, 100) + '...' : resolution;
+    document.getElementById('preview_executor').textContent = executor;
+    document.getElementById('preview_deadline').textContent = deadlineText;
+}
+
+// Добавляем обработчики событий
+document.addEventListener('DOMContentLoaded', function() {
+    const inputs = ['reg_number', 'resolution_text', 'assigned_to', 'deadline_days'];
+    inputs.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.addEventListener('input', updatePreview);
+            element.addEventListener('change', updatePreview);
+        }
+    });
+    updatePreview();
+});
+</script>
+
+<style>
+.required-field::after {
+    content: " *";
+    color: red;
+}
+</style>
+{% endblock %}

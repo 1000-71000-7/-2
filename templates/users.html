@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление пользователями</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .user-card { transition: transform 0.2s; }
+        .user-card:hover { transform: translateY(-3px); }
+        .required-field::after { content: "*"; color: red; margin-left: 5px; }
+        .role-badge {
+            font-size: 0.85rem;
+            padding: 5px 10px;
+        }
+        .status-badge {
+            font-size: 0.85rem;
+            padding: 5px 10px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/operator">
+                <i class="fas fa-users"></i> Управление пользователями
+            </a>
+            <div>
+                <span class="text-light me-3">
+                    <i class="fas fa-user"></i> {{ session.full_name }}
+                    <span class="badge bg-danger ms-1">Admin</span>
+                </span>
+                <a href="/operator" class="btn btn-outline-light">
+                    <i class="fas fa-arrow-left"></i> Назад
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Форма добавления/редактирования пользователя -->
+        {% if form %}
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-user-plus"></i> {{ title or 'Добавление пользователя' }}</h5>
+            </div>
+            <div class="card-body">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show">
+                                <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.username.label(class="form-label required-field") }}
+                            {{ form.username(class="form-control", placeholder="Введите логин") }}
+                            {% for error in form.username.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                            <small class="text-muted">Только латинские буквы, цифры и _</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.full_name.label(class="form-label required-field") }}
+                            {{ form.full_name(class="form-control", placeholder="Иванов Иван Иванович") }}
+                            {% for error in form.full_name.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.password.label(class="form-label") }}
+                            <div class="input-group">
+                                {{ form.password(class="form-control", placeholder="Оставьте пустым для пароля по умолчанию 123456", type="password") }}
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('password')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            {% for error in form.password.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                            <small class="text-muted">Минимум 6 символов</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.confirm_password.label(class="form-label") }}
+                            <div class="input-group">
+                                {{ form.confirm_password(class="form-control", placeholder="Подтвердите пароль", type="password") }}
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('confirm_password')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            {% for error in form.confirm_password.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.email.label(class="form-label") }}
+                            {{ form.email(class="form-control", placeholder="example@mail.com") }}
+                            {% for error in form.email.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.phone.label(class="form-label") }}
+                            {{ form.phone(class="form-control", placeholder="+7 (123) 456-78-90") }}
+                            {% for error in form.phone.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.role.label(class="form-label required-field") }}
+                            {{ form.role(class="form-select") }}
+                            {% for error in form.role.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                            <small class="text-muted">
+                                <span class="text-danger">Администратор</span> - полный доступ<br>
+                                <span class="text-warning">Оператор</span> - работа с обращениями<br>
+                                <span class="text-info">Клиент</span> - только подача обращений
+                            </small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.is_active.label(class="form-check-label") }}
+                            <div class="mt-2">
+                                <div class="form-check form-switch">
+                                    {{ form.is_active(class="form-check-input", style="width: 3em; height: 1.5em;") }}
+                                    <label class="form-check-label ms-2" for="is_active">
+                                        <span class="badge bg-success" id="activeLabel">Активен</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <small class="text-muted">Неактивные пользователи не могут войти в систему</small>
+                            {% for error in form.is_active.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.notes.label(class="form-label") }}
+                        {{ form.notes(class="form-control", rows=3, placeholder="Дополнительная информация о пользователе...") }}
+                        {% for error in form.notes.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <hr>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> {{ submit_text or 'Сохранить' }}
+                        </button>
+                        <a href="/users" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Отмена
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Список пользователей -->
+        <div class="card">
+            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-users"></i> Список пользователей</h5>
+                <a href="/users/add" class="btn btn-sm btn-light">
+                    <i class="fas fa-plus"></i> Добавить пользователя
+                </a>
+            </div>
+            <div class="card-body">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Логин</th>
+                                <th>ФИО</th>
+                                <th>Email</th>
+                                <th>Телефон</th>
+                                <th>Роль</th>
+                                <th>Статус</th>
+                                <th>Дата регистрации</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr class="user-card">
+                                <td>{{ user.id }}</div>
+                                <td><strong>{{ user.username }}</strong></div>
+                                <td>{{ user.full_name }}</div>
+                                <td>{{ user.email or '<span class="text-muted">—</span>'|safe }}</div>
+                                <td>{{ user.phone or '<span class="text-muted">—</span>'|safe }}</div>
+                                <td>
+                                    {% if user.role == 'admin' %}
+                                        <span class="badge bg-danger role-badge">
+                                            <i class="fas fa-crown"></i> Администратор
+                                        </span>
+                                    {% elif user.role == 'operator' %}
+                                        <span class="badge bg-warning text-dark role-badge">
+                                            <i class="fas fa-user-tie"></i> Оператор
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-info role-badge">
+                                            <i class="fas fa-user"></i> Клиент
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <td>
+                                    {% if user.is_active %}
+                                        <span class="badge bg-success status-badge">
+                                            <i class="fas fa-check-circle"></i> Активен
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-danger status-badge">
+                                            <i class="fas fa-ban"></i> Заблокирован
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <td>{{ user.created_at.strftime('%d.%m.%Y') if user.created_at else '-' }}</div>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="/users/edit/{{ user.id }}" class="btn btn-warning" title="Редактировать">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {% if user.id != session.user_id %}
+                                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ user.id }}" title="Удалить">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Модальное окно подтверждения удаления -->
+                                    {% if user.id != session.user_id %}
+                                    <div class="modal fade" id="deleteModal{{ user.id }}" tabindex="-1">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header bg-danger text-white">
+                                                    <h5 class="modal-title">
+                                                        <i class="fas fa-exclamation-triangle"></i> Подтверждение удаления
+                                                    </h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p>Вы уверены, что хотите удалить пользователя <strong>{{ user.username }}</strong>?</p>
+                                                    <p class="text-danger mb-0">
+                                                        <i class="fas fa-warning"></i>
+                                                        <strong>Внимание!</strong> Удаление необратимо. Все обращения пользователя будут также удалены.
+                                                    </p>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                        <i class="fas fa-times"></i> Отмена
+                                                    </button>
+                                                    <form action="/users/delete/{{ user.id }}" method="POST" style="display: inline;">
+                                                        <button type="submit" class="btn btn-danger">
+                                                            <i class="fas fa-trash"></i> Удалить
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-5">
+                                    <i class="fas fa-users fa-3x mb-3 d-block"></i>
+                                    Пользователи не найдены
+                                    <br>
+                                    <a href="/users/add" class="btn btn-primary mt-3">
+                                        <i class="fas fa-plus"></i> Добавить первого пользователя
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Статистика по пользователям -->
+                {% if users %}
+                <hr>
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="alert alert-info">
+                            <i class="fas fa-users fa-2x"></i>
+                            <h4>{{ users|length }}</h4>
+                            <p class="mb-0">Всего пользователей</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="alert alert-danger">
+                            <i class="fas fa-crown fa-2x"></i>
+                            <h4>{{ users|selectattr('role', 'equalto', 'admin')|list|length }}</h4>
+                            <p class="mb-0">Администраторов</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="alert alert-warning">
+                            <i class="fas fa-user-tie fa-2x"></i>
+                            <h4>{{ users|selectattr('role', 'equalto', 'operator')|list|length }}</h4>
+                            <p class="mb-0">Операторов</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="alert alert-success">
+                            <i class="fas fa-user fa-2x"></i>
+                            <h4>{{ users|selectattr('role', 'equalto', 'client')|list|length }}</h4>
+                            <p class="mb-0">Клиентов</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Показать/скрыть пароль
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                const type = field.getAttribute('type') === 'password' ? 'text' : 'password';
+                field.setAttribute('type', type);
+            }
+        }
+
+        // Обновление метки активности при переключении
+        document.addEventListener('DOMContentLoaded', function() {
+            const activeSwitch = document.getElementById('is_active');
+            const activeLabel = document.getElementById('activeLabel');
+
+            if (activeSwitch && activeLabel) {
+                function updateLabel() {
+                    if (activeSwitch.checked) {
+                        activeLabel.className = 'badge bg-success';
+                        activeLabel.innerHTML = '<i class="fas fa-check-circle"></i> Активен';
+                    } else {
+                        activeLabel.className = 'badge bg-danger';
+                        activeLabel.innerHTML = '<i class="fas fa-ban"></i> Заблокирован';
+                    }
+                }
+
+                activeSwitch.addEventListener('change', updateLabel);
+                updateLabel();
+            }
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

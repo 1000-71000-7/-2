@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Просмотр обращения</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .comment-box {
+            background-color: #f8f9fa;
+            border-left: 3px solid #0d6efd;
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .status-badge {
+            font-size: 1rem;
+            padding: 8px 15px;
+        }
+        .resolution-box {
+            background-color: #d1e7dd;
+            border-left: 3px solid #198754;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .final-answer-box {
+            background-color: #fff3cd;
+            border-left: 3px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #dee2e6;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 25px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -24px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #0d6efd;
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px #0d6efd;
+        }
+        .action-buttons .btn {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/operator">
+                <i class="fas fa-file-alt"></i> Обращение #{{ appeal.reg_number or appeal.id }}
+            </a>
+            <div class="ms-auto">
+                <span class="text-light me-3">
+                    <i class="fas fa-user"></i> {{ session.full_name }}
+                </span>
+                <a href="/operator/appeals" class="btn btn-outline-light">
+                    <i class="fas fa-arrow-left"></i> Назад
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-8">
+                <!-- Детали обращения -->
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-info-circle"></i> Детали обращения</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-bordered">
+                            <tr><th style="width: 180px;">Номер:</th>
+                                <td>
+                                    <strong>{{ appeal.reg_number or 'Ожидает регистрации' }}</strong>
+                                    {% if not appeal.is_registered %}
+                                        <br><small class="text-warning">⚠️ Не зарегистрировано</small>
+                                    {% endif %}
+                                </div>
+                            </tr>
+                            <tr><th>Дата создания:</th><td>{{ appeal.created_at.strftime('%d.%m.%Y %H:%M') if appeal.created_at else appeal.appeal_date.strftime('%d.%m.%Y') }}</td></tr>
+                            <tr><th>Тип обращения:</th>
+                                <td>
+                                    {% if appeal.type %}
+                                        {% if appeal.type.name == 'Жалоба' %}
+                                            <span class="text-danger"><i class="fas fa-exclamation-circle"></i></span>
+                                        {% elif appeal.type.name == 'Предложение' %}
+                                            <span class="text-success"><i class="fas fa-lightbulb"></i></span>
+                                        {% elif appeal.type.name == 'Вопрос' %}
+                                            <span class="text-info"><i class="fas fa-question-circle"></i></span>
+                                        {% endif %}
+                                        {{ appeal.type.name }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr><th>Статус:</th>
+                                <td>
+                                    {% set status_colors = {
+                                        'Новое (не зарегистрировано)': 'secondary',
+                                        'Зарегистрировано': 'info',
+                                        'Назначено исполнителю': 'primary',
+                                        'Исполнено': 'success',
+                                        'Дан ответ заявителю': 'success',
+                                        'Отклонено': 'danger'
+                                    } %}
+                                    <span class="badge bg-{{ status_colors.get(appeal.status.name, 'secondary') }} status-badge">
+                                        {{ appeal.status.name }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr><th>Приоритет:</th>
+                                <td>
+                                    {% if appeal.priority == 3 %}
+                                        <span class="badge bg-danger">Высокий</span>
+                                    {% elif appeal.priority == 2 %}
+                                        <span class="badge bg-warning">Средний</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Низкий</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr><th>Текст обращения:</th>
+                                <td class="bg-light p-3">{{ appeal.content|replace('\n', '<br>')|safe }}</td>
+                            </tr>
+                            {% if appeal.notes %}
+                            <tr><th>Примечания:</th><td>{{ appeal.notes|replace('\n', '<br>')|safe }}</td></tr>
+                            {% endif %}
+                            {% if appeal.executor %}
+                            <tr><th>Исполнитель:</th><td>{{ appeal.executor }}</td></tr>
+                            {% endif %}
+                         </table>
+                    </div>
+                </div>
+
+                <!-- Резолюции -->
+                {% if appeal.resolutions and appeal.resolutions|length > 0 %}
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-gavel"></i> Резолюции и назначения</h5>
+                    </div>
+                    <div class="card-body timeline">
+                        {% for resolution in appeal.resolutions %}
+                        <div class="timeline-item">
+                            <div class="d-flex justify-content-between mb-2">
+                                <strong><i class="fas fa-user-check"></i> {{ resolution.author.full_name }}</strong>
+                                <small class="text-muted">{{ resolution.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+                            </div>
+                            <div class="resolution-box">
+                                <p class="mb-2"><strong>Резолюция:</strong> {{ resolution.text }}</p>
+                                {% if resolution.assigned_to %}
+                                <p class="mb-1"><strong><i class="fas fa-user-tie"></i> Исполнитель:</strong> {{ resolution.assigned_to.full_name }}</p>
+                                {% endif %}
+                                <p class="mb-0"><strong><i class="fas fa-calendar-week"></i> Срок:</strong> {{ resolution.deadline_days }} дней</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Финальный ответ -->
+                {% if appeal.final_answer_text %}
+                <div class="card mb-3">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="fas fa-reply-all"></i> Ответ заявителю</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="final-answer-box">
+                            {{ appeal.final_answer_text|replace('\n', '<br>')|safe }}
+                            {% if appeal.final_answer_date %}
+                            <hr>
+                            <small class="text-muted">Дата ответа: {{ appeal.final_answer_date.strftime('%d.%m.%Y') }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Комментарии -->
+                <div id="comments" class="card mb-3">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="fas fa-comments"></i> Комментарии специалистов</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if comments %}
+                            {% for comment in comments %}
+                            <div class="comment-box">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <strong><i class="fas fa-user-circle"></i> {{ comment.user.full_name }}</strong>
+                                    <small class="text-muted">{{ comment.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+                                </div>
+                                <p class="mb-0">{{ comment.comment|replace('\n', '<br>')|safe }}</p>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-3 text-muted">
+                                <i class="fas fa-comment-slash fa-2x mb-2"></i>
+                                <p class="mb-0">Нет комментариев</p>
+                            </div>
+                        {% endif %}
+
+                        <hr>
+                        <form method="POST" action="{{ url_for('operator_add_comment', id=appeal.id) }}">
+                            {{ comment_form.hidden_tag() }}
+                            <div class="mb-3">
+                                {{ comment_form.comment.label(class="form-label") }}
+                                {{ comment_form.comment(class="form-control", rows=3, placeholder="Введите комментарий...") }}
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Добавить комментарий
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <!-- Информация о заявителе -->
+                <div class="card mb-3">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0"><i class="fas fa-user"></i> Заявитель</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong><i class="fas fa-user"></i> ФИО:</strong><br>{{ appeal.citizen_name }}</p>
+                        {% if appeal.citizen_phone %}
+                        <p><strong><i class="fas fa-phone"></i> Телефон:</strong><br>{{ appeal.citizen_phone }}</p>
+                        {% endif %}
+                        {% if appeal.citizen_email %}
+                        <p><strong><i class="fas fa-envelope"></i> Email:</strong><br>{{ appeal.citizen_email }}</p>
+                        {% endif %}
+                        {% if appeal.citizen_address %}
+                        <p><strong><i class="fas fa-map-marker-alt"></i> Адрес:</strong><br>{{ appeal.citizen_address }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Действия с обращением -->
+                <div class="card mb-3">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0"><i class="fas fa-tools"></i> Действия</h5>
+                    </div>
+                    <div class="card-body action-buttons">
+                        <!-- Регистрация обращения -->
+                        {% if not appeal.is_registered %}
+                        <a href="/operator/appeal/{{ appeal.id }}/register" class="btn btn-primary w-100">
+                            <i class="fas fa-registered"></i> Зарегистрировать обращение
+                        </a>
+                        <small class="text-muted">Присвоить номер, назначить исполнителя</small>
+                        {% endif %}
+
+                        <!-- Отправка ответа -->
+                        {% if appeal.is_registered and not appeal.final_answer_sent and appeal.status.name != 'Отклонено' %}
+                        <a href="/operator/appeal/{{ appeal.id }}/final-answer" class="btn btn-success w-100 mt-2">
+                            <i class="fas fa-reply-all"></i> Отправить ответ заявителю
+                        </a>
+                        <small class="text-muted">Подготовить официальный ответ</small>
+                        {% endif %}
+
+                        <!-- Информация о регистрации -->
+                        {% if appeal.is_registered %}
+                        <div class="alert alert-info mt-3 mb-0">
+                            <i class="fas fa-check-circle"></i>
+                            <strong>Зарегистрировано:</strong><br>
+                            № {{ appeal.reg_number }}<br>
+                            {{ appeal.registered_at.strftime('%d.%m.%Y %H:%M') if appeal.registered_at }}
+                        </div>
+                        {% endif %}
+
+                        <!-- Информация об ответе -->
+                        {% if appeal.final_answer_sent %}
+                        <div class="alert alert-success mt-3 mb-0">
+                            <i class="fas fa-envelope"></i>
+                            <strong>Ответ отправлен:</strong><br>
+                            {{ appeal.final_answer_date.strftime('%d.%m.%Y') if appeal.final_answer_date }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Изменение статуса -->
+                <div id="change-status" class="card mb-3">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0"><i class="fas fa-exchange-alt"></i> Изменить статус</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('operator_change_status', id=appeal.id) }}">
+                            {{ status_form.hidden_tag() }}
+                            <div class="mb-3">
+                                {{ status_form.status_id.label(class="form-label") }}
+                                {{ status_form.status_id(class="form-select") }}
+                            </div>
+                            <div class="mb-3">
+                                {{ status_form.resolution_text.label(class="form-label") }}
+                                {{ status_form.resolution_text(class="form-control", rows=3, placeholder="Укажите результат решения") }}
+                                <small class="text-muted">Обязательно для финальных статусов</small>
+                            </div>
+                            <button type="submit" class="btn btn-warning w-100">
+                                <i class="fas fa-save"></i> Применить статус
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Системная информация -->
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0"><i class="fas fa-clock"></i> Системная информация</h5>
+                    </div>
+                    <div class="card-body">
+                        <small><strong>Создано:</strong><br>{{ appeal.created_at.strftime('%d.%m.%Y %H:%M') if appeal.created_at else appeal.appeal_date.strftime('%d.%m.%Y') }}</small>
+                        <hr>
+                        <small><strong>Кем создано:</strong><br>{{ appeal.creator.full_name if appeal.creator else 'Система' }}</small>
+                        {% if appeal.registered_by %}
+                        <hr>
+                        <small><strong>Зарегистрировано:</strong><br>{{ appeal.registered_by.full_name }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Подсказка для поля решения при выборе финального статуса
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusSelect = document.querySelector('select[name="status_id"]');
+            const resolutionText = document.querySelector('textarea[name="resolution_text"]');
+
+            if (statusSelect && resolutionText) {
+                function checkFinalStatus() {
+                    const selectedOption = statusSelect.options[statusSelect.selectedIndex];
+                    const statusName = selectedOption ? selectedOption.text : '';
+                    const isFinal = statusName.includes('Дан ответ') || statusName.includes('Отклонено');
+
+                    if (isFinal) {
+                        resolutionText.required = true;
+                        resolutionText.placeholder = "⚠️ ОБЯЗАТЕЛЬНО: Укажите результат решения";
+                        resolutionText.classList.add('border-danger');
+                    } else {
+                        resolutionText.required = false;
+                        resolutionText.placeholder = "Укажите результат решения (при завершении)";
+                        resolutionText.classList.remove('border-danger');
+                    }
+                }
+
+                statusSelect.addEventListener('change', checkFinalStatus);
+                checkFinalStatus();
+            }
+        });
+    </script>
+</body>
+</html>

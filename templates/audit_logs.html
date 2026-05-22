@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Логи аудита{% endblock %}
+{% block content %}
+<nav class="navbar navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/audit">📋 Логи аудита</a>
+        <a href="/operator" class="btn btn-outline-light">
+            <i class="fas fa-arrow-left"></i> Назад
+        </a>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-history"></i> Журнал событий</h5>
+        </div>
+        <div class="card-body">
+            {% if logs %}
+            <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Время</th>
+                            <th>Пользователь</th>
+                            <th>Действие</th>
+                            <th>Объект</th>
+                            <th>Детали</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td>{{ log.created_at.strftime('%d.%m.%Y %H:%M:%S') if log.created_at else '-' }}</div>
+                            <td>{{ log.username or '-' }}</div>
+                            <td>{{ log.action or '-' }}</div>
+                            <td>{{ log.target_name or '-' }}</div>
+                            <td>{{ log.details or '-'|truncate(50) }}</div>
+                            <td>
+                                {% if log.status == 'success' %}
+                                    <span class="badge bg-success">✓</span>
+                                {% else %}
+                                    <span class="badge bg-danger">✗</span>
+                                {% endif %}
+                            </div>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                <p class="lead">Нет записей в логах</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

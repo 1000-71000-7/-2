@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Публичные ответы на обращения{% endblock %}
+{% block content %}
+<nav class="navbar navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/">🌐 Публичные ответы</a>
+        <a href="/" class="btn btn-outline-light">
+            <i class="fas fa-home"></i> На главную
+        </a>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-globe"></i> Ответы на обращения граждан</h5>
+        </div>
+        <div class="card-body">
+            {% if pagination.items %}
+                <div class="list-group">
+                    {% for appeal in pagination.items %}
+                    <a href="/public-appeal/{{ appeal.id }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">Обращение #{{ appeal.registration_number }}</h6>
+                            <small>{{ appeal.response_sent_date.strftime('%d.%m.%Y') if appeal.response_sent_date else '-' }}</small>
+                        </div>
+                        <p class="mb-1 text-muted">{{ appeal.content[:150] }}...</p>
+                        <small>Тип: {{ appeal.type.name if appeal.type else '-' }} |
+                               Заявитель: {{ appeal.citizen_name[:1] }}***</small>
+                    </a>
+                    {% endfor %}
+                </div>
+
+                <!-- Пагинация -->
+                {% if pagination.pages > 1 %}
+                <nav class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if pagination.has_prev %}
+                        <li class="page-item"><a class="page-link" href="?page={{ pagination.prev_num }}">←</a></li>
+                        {% endif %}
+                        {% for p in pagination.iter_pages() %}
+                            {% if p %}
+                                <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                                    <a class="page-link" href="?page={{ p }}">{{ p }}</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            {% endif %}
+                        {% endfor %}
+                        {% if pagination.has_next %}
+                        <li class="page-item"><a class="page-link" href="?page={{ pagination.next_num }}">→</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                    <p class="lead">Нет опубликованных ответов</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

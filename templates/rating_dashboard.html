@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Рейтинг исполнителей{% endblock %}
+{% block content %}
+<nav class="navbar navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/rating">🏆 Рейтинг исполнителей</a>
+        <a href="/operator" class="btn btn-outline-light">
+            <i class="fas fa-arrow-left"></i> Назад
+        </a>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="fas fa-trophy"></i> Топ исполнителей</h5>
+        </div>
+        <div class="card-body">
+            {% if top_employees %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>ФИО</th>
+                            <th>Отдел</th>
+                            <th>Рейтинг</th>
+                            <th>Выполнено</th>
+                            <th>В срок</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for emp in top_employees %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ emp.user.full_name }}</td>
+                            <td>{{ emp.department.name if emp.department else '-' }}</td>
+                            <td>
+                                <div class="progress" style="height: 8px; width: 100px; display: inline-block;">
+                                    <div class="progress-bar bg-success" style="width: {{ emp.rating_score }}%"></div>
+                                </div>
+                                {{ emp.rating_score }}
+                            </td>
+                            <td>{{ emp.completed_count }}</td>
+                            <td>{{ emp.on_time_rate }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-chart-line fa-4x text-muted mb-3"></i>
+                <p class="lead">Нет данных для рейтинга</p>
+                <p>После выполнения поручений здесь появится статистика</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

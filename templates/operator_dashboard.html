@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель оператора</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .stat-card { transition: transform 0.2s; cursor: pointer; }
+        .stat-card:hover { transform: translateY(-5px); }
+        .table td { vertical-align: middle; }
+        .badge {
+            font-size: 0.85em;
+        }
+        .welcome-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .dropdown-menu {
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .dropdown-item:hover {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/operator">
+                <i class="fas fa-tachometer-alt"></i> Панель оператора
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/operator/appeals">
+                            <i class="fas fa-list"></i> Список обращений
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/operator/appeal/add">
+                            <i class="fas fa-plus-circle"></i> Создать обращение
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/statistics">
+                            <i class="fas fa-chart-bar"></i> Статистика
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/public-appeals">
+                            <i class="fas fa-globe"></i> Публичные ответы
+                        </a>
+                    </li>
+                    {% if session.role == 'admin' %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-cog"></i> Управление
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/employees">
+                                <i class="fas fa-users"></i> Сотрудники
+                            </a></li>
+                            <li><a class="dropdown-item" href="/departments">
+                                <i class="fas fa-building"></i> Отделы
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/users">
+                                <i class="fas fa-user-shield"></i> Пользователи
+                            </a></li>
+                            <li><a class="dropdown-item" href="/audit">
+                                <i class="fas fa-history"></i> Логи аудита
+                            </a></li>
+                            <li><a class="dropdown-item" href="/rating">
+                                <i class="fas fa-trophy"></i> Рейтинг
+                            </a></li>
+                            <li><a class="dropdown-item" href="/archive">
+                                <i class="fas fa-archive"></i> Архив
+                            </a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/profile">
+                            <i class="fas fa-user"></i> {{ session.full_name }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-danger" href="/logout">
+                            <i class="fas fa-sign-out-alt"></i> Выйти
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Приветствие -->
+        <div class="welcome-banner">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h3><i class="fas fa-hand-wave"></i> Здравствуйте, {{ session.full_name }}!</h3>
+                    <p class="mb-0">Управляйте обращениями граждан, назначайте исполнителей и контролируйте сроки.</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <a href="/operator/appeal/add" class="btn btn-light">
+                        <i class="fas fa-plus"></i> Новое обращение
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Статистика -->
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card text-white bg-primary" onclick="window.location='/operator/appeals'">
+                    <div class="card-body text-center">
+                        <i class="fas fa-tasks fa-3x mb-2"></i>
+                        <h2 class="mb-0">{{ stats.total if stats else 0 }}</h2>
+                        <p class="mb-0">Всего обращений</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card text-white bg-warning" onclick="window.location='/operator/appeals?status_id=1'">
+                    <div class="card-body text-center">
+                        <i class="fas fa-clock fa-3x mb-2"></i>
+                        <h2 class="mb-0">{{ stats.new if stats else 0 }}</h2>
+                        <p class="mb-0">Требуют регистрации</p>
+                        <small>Новые обращения</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card text-white bg-info" onclick="window.location='/operator/appeals?status_id=2'">
+                    <div class="card-body text-center">
+                        <i class="fas fa-check-circle fa-3x mb-2"></i>
+                        <h2 class="mb-0">{{ stats.registered if stats else 0 }}</h2>
+                        <p class="mb-0">Зарегистрировано</p>
+                        <small>Ожидают назначения</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card text-white bg-primary" onclick="window.location='/operator/appeals?status_id=4'">
+                    <div class="card-body text-center">
+                        <i class="fas fa-user-check fa-3x mb-2"></i>
+                        <h2 class="mb-0">{{ stats.assigned if stats else 0 }}</h2>
+                        <p class="mb-0">Назначено исполнителям</p>
+                        <small>В работе</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <div class="card stat-card text-white bg-success" onclick="window.location='/operator/appeals?status_id=5'">
+                    <div class="card-body text-center">
+                        <i class="fas fa-check-double fa-3x mb-2"></i>
+                        <h2 class="mb-0">{{ stats.completed if stats else 0 }}</h2>
+                        <p class="mb-0">Исполнено</p>
+                        <small>Требуют отправки ответа</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card stat-card text-white bg-success" onclick="window.location='/operator/appeals?status_id=8'">
+                    <div class="card-body text-center">
+                        <i class="fas fa-envelope fa-3x mb-2"></i>
+                        <h2 class="mb-0">{{ stats.final if stats else 0 }}</h2>
+                        <p class="mb-0">Ответ направлен</p>
+                        <small>Завершено</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card stat-card text-white bg-danger" onclick="window.location='/operator/appeals?status_id=9'">
+                    <div class="card-body text-center">
+                        <i class="fas fa-times-circle fa-3x mb-2"></i>
+                        <h2 class="mb-0">{{ stats.rejected if stats else 0 }}</h2>
+                        <p class="mb-0">Отклонено</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Последние обращения -->
+        <div class="card">
+            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-history"></i> Последние обращения</h5>
+                <div>
+                    <a href="/operator/appeal/add" class="btn btn-sm btn-light me-2">
+                        <i class="fas fa-plus"></i> Создать
+                    </a>
+                    <a href="/operator/appeals" class="btn btn-sm btn-light">
+                        Все обращения <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if recent_appeals %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>№</th>
+                                    <th>Дата</th>
+                                    <th>Заявитель</th>
+                                    <th>Тип</th>
+                                    <th>Статус</th>
+                                    <th>Регистрация</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for appeal in recent_appeals %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ appeal.reg_number or 'Ожидает' }}</strong>
+                                        <br><small class="text-muted">ID: {{ appeal.id }}</small>
+                                    </td>
+                                    <td>{{ appeal.created_at.strftime('%d.%m.%Y') if appeal.created_at else '-' }}</td>
+                                    <td>{{ appeal.citizen_name|truncate(30) }}</td>
+                                    <td>{{ appeal.type.name if appeal.type else '-' }}</td>
+                                    <td>
+                                        {% set status_colors = {
+                                            'Новое (на регистрации)': 'secondary',
+                                            'Зарегистрировано': 'info',
+                                            'На рассмотрении': 'primary',
+                                            'Назначен исполнитель': 'primary',
+                                            'Ответ подготовлен': 'info',
+                                            'Одобрено': 'success',
+                                            'На доработке': 'warning',
+                                            'Ответ отправлен': 'success',
+                                            'Отклонено': 'danger'
+                                        } %}
+                                        <span class="badge bg-{{ status_colors.get(appeal.status.name, 'secondary') }}">
+                                            {{ appeal.status.name }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if appeal.registration_number %}
+                                            <i class="fas fa-check-circle text-success"></i> {{ appeal.registration_date.strftime('%d.%m.%Y') if appeal.registration_date }}
+                                        {% else %}
+                                            <span class="text-warning">⚠️ не зарегистрировано</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="/operator/appeal/{{ appeal.id }}" class="btn btn-info" title="Просмотр">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if not appeal.registration_number %}
+                                            <a href="/operator/appeal/{{ appeal.id }}/register" class="btn btn-primary" title="Зарегистрировать">
+                                                <i class="fas fa-registered"></i>
+                                            </a>
+                                            {% endif %}
+                                            {% if appeal.registration_number and appeal.status.name != 'Ответ отправлен' and appeal.status.name != 'Отклонено' %}
+                                            <a href="/operator/appeal/{{ appeal.id }}" class="btn btn-warning" title="Изменить статус">
+                                                <i class="fas fa-exchange-alt"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                        <p class="lead">Нет обращений</p>
+                        <a href="/operator/appeal/add" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Создать первое обращение
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Быстрые действия -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0"><i class="fas fa-bolt"></i> Быстрые действия</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <a href="/operator/appeals?status_id=1" class="btn btn-outline-warning w-100">
+                                    <i class="fas fa-clock"></i> Требуют регистрации
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="/operator/appeals?status_id=4" class="btn btn-outline-primary w-100">
+                                    <i class="fas fa-user-check"></i> В работе у исполнителей
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="/operator/appeals?status_id=5" class="btn btn-outline-success w-100">
+                                    <i class="fas fa-check-double"></i> Требуют отправки ответа
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="/statistics" class="btn btn-outline-info w-100">
+                                    <i class="fas fa-chart-line"></i> Подробная статистика
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
