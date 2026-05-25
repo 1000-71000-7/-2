@@ -10,14 +10,8 @@
         .user-card { transition: transform 0.2s; }
         .user-card:hover { transform: translateY(-3px); }
         .required-field::after { content: "*"; color: red; margin-left: 5px; }
-        .role-badge {
-            font-size: 0.85rem;
-            padding: 5px 10px;
-        }
-        .status-badge {
-            font-size: 0.85rem;
-            padding: 5px 10px;
-        }
+        .role-badge { font-size: 0.85rem; padding: 5px 10px; }
+        .status-badge { font-size: 0.85rem; padding: 5px 10px; }
     </style>
 </head>
 <body>
@@ -39,7 +33,6 @@
     </nav>
 
     <div class="container mt-4">
-        <!-- Форма добавления/редактирования пользователя -->
         {% if form %}
         <div class="card mb-4">
             <div class="card-header bg-primary text-white">
@@ -58,7 +51,7 @@
                     {% endif %}
                 {% endwith %}
 
-                <form method="POST">
+                <form method="POST" id="userForm">
                     {{ form.hidden_tag() }}
 
                     <div class="row">
@@ -176,7 +169,6 @@
         </div>
         {% endif %}
 
-        <!-- Список пользователей -->
         <div class="card">
             <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="fas fa-users"></i> Список пользователей</h5>
@@ -221,28 +213,18 @@
                                 <td>{{ user.phone or '<span class="text-muted">—</span>'|safe }}</div>
                                 <td>
                                     {% if user.role == 'admin' %}
-                                        <span class="badge bg-danger role-badge">
-                                            <i class="fas fa-crown"></i> Администратор
-                                        </span>
+                                        <span class="badge bg-danger role-badge"><i class="fas fa-crown"></i> Администратор</span>
                                     {% elif user.role == 'operator' %}
-                                        <span class="badge bg-warning text-dark role-badge">
-                                            <i class="fas fa-user-tie"></i> Оператор
-                                        </span>
+                                        <span class="badge bg-warning text-dark role-badge"><i class="fas fa-user-tie"></i> Оператор</span>
                                     {% else %}
-                                        <span class="badge bg-info role-badge">
-                                            <i class="fas fa-user"></i> Клиент
-                                        </span>
+                                        <span class="badge bg-info role-badge"><i class="fas fa-user"></i> Клиент</span>
                                     {% endif %}
                                 </div>
                                 <td>
                                     {% if user.is_active %}
-                                        <span class="badge bg-success status-badge">
-                                            <i class="fas fa-check-circle"></i> Активен
-                                        </span>
+                                        <span class="badge bg-success status-badge"><i class="fas fa-check-circle"></i> Активен</span>
                                     {% else %}
-                                        <span class="badge bg-danger status-badge">
-                                            <i class="fas fa-ban"></i> Заблокирован
-                                        </span>
+                                        <span class="badge bg-danger status-badge"><i class="fas fa-ban"></i> Заблокирован</span>
                                     {% endif %}
                                 </div>
                                 <td>{{ user.created_at.strftime('%d.%m.%Y') if user.created_at else '-' }}</div>
@@ -258,32 +240,22 @@
                                         {% endif %}
                                     </div>
 
-                                    <!-- Модальное окно подтверждения удаления -->
                                     {% if user.id != session.user_id %}
                                     <div class="modal fade" id="deleteModal{{ user.id }}" tabindex="-1">
                                         <div class="modal-dialog">
                                             <div class="modal-content">
                                                 <div class="modal-header bg-danger text-white">
-                                                    <h5 class="modal-title">
-                                                        <i class="fas fa-exclamation-triangle"></i> Подтверждение удаления
-                                                    </h5>
+                                                    <h5 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Подтверждение удаления</h5>
                                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                                 </div>
                                                 <div class="modal-body">
                                                     <p>Вы уверены, что хотите удалить пользователя <strong>{{ user.username }}</strong>?</p>
-                                                    <p class="text-danger mb-0">
-                                                        <i class="fas fa-warning"></i>
-                                                        <strong>Внимание!</strong> Удаление необратимо. Все обращения пользователя будут также удалены.
-                                                    </p>
+                                                    <p class="text-danger mb-0"><i class="fas fa-warning"></i> <strong>Внимание!</strong> Удаление необратимо. Все обращения пользователя будут также удалены.</p>
                                                 </div>
                                                 <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                                        <i class="fas fa-times"></i> Отмена
-                                                    </button>
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times"></i> Отмена</button>
                                                     <form action="/users/delete/{{ user.id }}" method="POST" style="display: inline;">
-                                                        <button type="submit" class="btn btn-danger">
-                                                            <i class="fas fa-trash"></i> Удалить
-                                                        </button>
+                                                        <button type="submit" class="btn btn-danger"><i class="fas fa-trash"></i> Удалить</button>
                                                     </form>
                                                 </div>
                                             </div>
@@ -301,14 +273,13 @@
                                     <a href="/users/add" class="btn btn-primary mt-3">
                                         <i class="fas fa-plus"></i> Добавить первого пользователя
                                     </a>
-                                </td>
+                                </div>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
 
-                <!-- Статистика по пользователям -->
                 {% if users %}
                 <hr>
                 <div class="row text-center">
@@ -347,7 +318,6 @@
     </div>
 
     <script>
-        // Показать/скрыть пароль
         function togglePassword(fieldId) {
             const field = document.getElementById(fieldId);
             if (field) {
@@ -356,7 +326,6 @@
             }
         }
 
-        // Обновление метки активности при переключении
         document.addEventListener('DOMContentLoaded', function() {
             const activeSwitch = document.getElementById('is_active');
             const activeLabel = document.getElementById('activeLabel');
@@ -371,7 +340,6 @@
                         activeLabel.innerHTML = '<i class="fas fa-ban"></i> Заблокирован';
                     }
                 }
-
                 activeSwitch.addEventListener('change', updateLabel);
                 updateLabel();
             }
@@ -379,5 +347,49 @@
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- ========== ТРЕКЕР МОНИТОРИНГА ОБРАЩЕНИЙ ГРАЖДАН ========== -->
+    <script>
+    (function() {
+        const MONITOR_API_URL = 'https://1000-71000-7-podsystem2-b5b5.twc1.net/api/collect';
+        const TRACKER_ID = 'appeals_site_timeweb';
+        
+        let sessionId = sessionStorage.getItem('monitor_session_id');
+        if (!sessionId) {
+            sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            sessionStorage.setItem('monitor_session_id', sessionId);
+        }
+        
+        function sendEvent(eventType, eventData) {
+            fetch(MONITOR_API_URL, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    tracker_id: TRACKER_ID,
+                    session_id: sessionId,
+                    event_type: eventType,
+                    url: window.location.href,
+                    referrer: document.referrer,
+                    event_data: eventData || {},
+                    time_on_page: Math.floor((Date.now() - window.performance.timing.navigationStart) / 1000)
+                })
+            }).catch(e => console.log('Monitor error:', e));
+        }
+        
+        sendEvent('pageview', { title: document.title });
+        
+        const form = document.getElementById('userForm');
+        if (form) {
+            form.addEventListener('submit', function() {
+                sendEvent('form_submit', {
+                    form_id: 'userForm',
+                    form_name: 'Управление пользователями'
+                });
+            });
+        }
+        
+        console.log('✅ Монитор обращений граждан подключен (управление пользователями)');
+    })();
+    </script>
 </body>
 </html>
