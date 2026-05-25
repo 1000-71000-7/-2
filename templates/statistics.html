@@ -8,16 +8,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        .stat-card {
-            transition: transform 0.2s;
-            cursor: pointer;
-        }
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-        .table td, .table th {
-            vertical-align: middle;
-        }
+        .stat-card { transition: transform 0.2s; cursor: pointer; }
+        .stat-card:hover { transform: translateY(-5px); }
+        .table td, .table th { vertical-align: middle; }
         .dashboard-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -45,7 +38,6 @@
     </nav>
 
     <div class="container mt-4">
-        <!-- Заголовок -->
         <div class="dashboard-header">
             <div class="row align-items-center">
                 <div class="col-md-8">
@@ -60,7 +52,6 @@
             </div>
         </div>
 
-        <!-- Краткая статистика карточками -->
         <div class="row mb-4">
             <div class="col-md-3 mb-3">
                 <div class="card stat-card text-white bg-primary" onclick="window.location='/operator/appeals'">
@@ -109,7 +100,6 @@
             </div>
         </div>
 
-        <!-- Графики -->
         <div class="row">
             <div class="col-md-6 mb-4">
                 <div class="card h-100">
@@ -146,7 +136,6 @@
             </div>
         </div>
 
-        <!-- Сводная таблица -->
         {% if status_stats %}
         <div class="row">
             <div class="col-md-12">
@@ -172,10 +161,10 @@
                                         {% if loop.first %}
                                         <td rowspan="{{ status_stats|length }}" style="vertical-align: middle; background-color: #e9ecef; font-weight: bold;">
                                             📊 По статусам
-                                        </td>
+                                         </div>
                                         {% endif %}
-                                        <td>{{ stat.name }}</td>
-                                        <td class="text-end"><strong>{{ stat.count }}</strong></td>
+                                        <td>{{ stat.name }}</div>
+                                        <td class="text-end"><strong>{{ stat.count }}</strong></div>
                                         <td class="text-end">
                                             <div class="progress" style="height: 20px;">
                                                 <div class="progress-bar bg-{{ ['primary', 'warning', 'info', 'success', 'danger', 'secondary'][loop.index0 % 6] }}"
@@ -183,7 +172,7 @@
                                                     {% if total > 0 %}{{ (stat.count / total * 100)|round(1) }}%{% else %}0%{% endif %}
                                                 </div>
                                             </div>
-                                        </td>
+                                        </div>
                                     </tr>
                                     {% endfor %}
 
@@ -192,10 +181,10 @@
                                         {% if loop.first %}
                                         <td rowspan="{{ type_stats|length }}" style="vertical-align: middle; background-color: #e9ecef; font-weight: bold;">
                                             📋 По типам
-                                        </td>
+                                         </div>
                                         {% endif %}
-                                        <td>{{ stat.name }}</td>
-                                        <td class="text-end"><strong>{{ stat.count }}</strong></td>
+                                        <td>{{ stat.name }}</div>
+                                        <td class="text-end"><strong>{{ stat.count }}</strong></div>
                                         <td class="text-end">
                                             <div class="progress" style="height: 20px;">
                                                 <div class="progress-bar bg-{{ ['info', 'success', 'warning', 'primary', 'danger'][loop.index0 % 5] }}"
@@ -203,7 +192,7 @@
                                                     {% if total > 0 %}{{ (stat.count / total * 100)|round(1) }}%{% else %}0%{% endif %}
                                                 </div>
                                             </div>
-                                        </td>
+                                        </div>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
@@ -221,31 +210,9 @@
             </div>
         </div>
         {% endif %}
-
-        <!-- Информация о сроках -->
-        <div class="alert alert-secondary mt-4">
-            <div class="row text-center">
-                <div class="col-md-4">
-                    <i class="fas fa-calendar-alt fa-2x mb-2"></i>
-                    <h6>Средний срок рассмотрения</h6>
-                    <span class="badge bg-primary">В разработке</span>
-                </div>
-                <div class="col-md-4">
-                    <i class="fas fa-check-double fa-2x mb-2"></i>
-                    <h6>Выполнено в срок</h6>
-                    <span class="badge bg-success">В разработке</span>
-                </div>
-                <div class="col-md-4">
-                    <i class="fas fa-clock fa-2x mb-2"></i>
-                    <h6>Просрочено</h6>
-                    <span class="badge bg-danger">В разработке</span>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script>
-        // Данные для графиков
         const statusLabels = [{% for stat in status_stats %}'{{ stat.name }}',{% endfor %}];
         const statusData = [{% for stat in status_stats %}{{ stat.count }},{% endfor %}];
         const statusColors = ['#0d6efd', '#ffc107', '#0dcaf0', '#198754', '#dc3545', '#6c757d', '#20c997', '#fd7e14'];
@@ -257,129 +224,68 @@
         const monthlyLabels = [{% for stat in monthly_stats %}'{{ stat.month }}',{% endfor %}];
         const monthlyData = [{% for stat in monthly_stats %}{{ stat.count }},{% endfor %}];
 
-        // График статусов
         if (document.getElementById('statusChart') && statusLabels.length > 0) {
             const statusCtx = document.getElementById('statusChart').getContext('2d');
             new Chart(statusCtx, {
                 type: 'pie',
-                data: {
-                    labels: statusLabels,
-                    datasets: [{
-                        data: statusData,
-                        backgroundColor: statusColors.slice(0, statusLabels.length),
-                        borderWidth: 2,
-                        borderColor: '#fff'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: { position: 'bottom', labels: { font: { size: 11 } } },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.label || '';
-                                    const value = context.raw || 0;
-                                    const total = statusData.reduce((a, b) => a + b, 0);
-                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                                    return `${label}: ${value} (${percentage}%)`;
-                                }
-                            }
-                        }
-                    }
-                }
+                data: { labels: statusLabels, datasets: [{ data: statusData, backgroundColor: statusColors.slice(0, statusLabels.length), borderWidth: 2, borderColor: '#fff' }] },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } }, tooltip: { callbacks: { label: function(context) { const label = context.label || ''; const value = context.raw || 0; const total = statusData.reduce((a, b) => a + b, 0); const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0; return `${label}: ${value} (${percentage}%)`; } } } } }
             });
         }
 
-        // График типов
         if (document.getElementById('typeChart') && typeLabels.length > 0) {
             const typeCtx = document.getElementById('typeChart').getContext('2d');
             new Chart(typeCtx, {
                 type: 'pie',
-                data: {
-                    labels: typeLabels,
-                    datasets: [{
-                        data: typeData,
-                        backgroundColor: typeColors.slice(0, typeLabels.length),
-                        borderWidth: 2,
-                        borderColor: '#fff'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: { position: 'bottom', labels: { font: { size: 11 } } },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.label || '';
-                                    const value = context.raw || 0;
-                                    const total = typeData.reduce((a, b) => a + b, 0);
-                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                                    return `${label}: ${value} (${percentage}%)`;
-                                }
-                            }
-                        }
-                    }
-                }
+                data: { labels: typeLabels, datasets: [{ data: typeData, backgroundColor: typeColors.slice(0, typeLabels.length), borderWidth: 2, borderColor: '#fff' }] },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } }, tooltip: { callbacks: { label: function(context) { const label = context.label || ''; const value = context.raw || 0; const total = typeData.reduce((a, b) => a + b, 0); const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0; return `${label}: ${value} (${percentage}%)`; } } } } }
             });
         }
 
-        // График по месяцам
         if (document.getElementById('monthlyChart') && monthlyLabels.length > 0) {
             const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
             new Chart(monthlyCtx, {
                 type: 'line',
-                data: {
-                    labels: monthlyLabels,
-                    datasets: [{
-                        label: 'Количество обращений',
-                        data: monthlyData,
-                        borderColor: '#0d6efd',
-                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
-                        borderWidth: 3,
-                        tension: 0.3,
-                        fill: true,
-                        pointBackgroundColor: '#0d6efd',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointRadius: 6,
-                        pointHoverRadius: 8,
-                        pointHoverBackgroundColor: '#0d6efd'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: { position: 'top' },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return `📝 Обращений: ${context.raw}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { stepSize: 1, precision: 0 },
-                            title: { display: true, text: 'Количество', font: { weight: 'bold' } },
-                            grid: { color: '#e9ecef' }
-                        },
-                        x: {
-                            title: { display: true, text: 'Месяц', font: { weight: 'bold' } },
-                            grid: { display: false }
-                        }
-                    }
-                }
+                data: { labels: monthlyLabels, datasets: [{ label: 'Количество обращений', data: monthlyData, borderColor: '#0d6efd', backgroundColor: 'rgba(13, 110, 253, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointBackgroundColor: '#0d6efd', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 6, pointHoverRadius: 8 }] },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: function(context) { return `📝 Обращений: ${context.raw}`; } } } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, title: { display: true, text: 'Количество', font: { weight: 'bold' } } }, x: { title: { display: true, text: 'Месяц', font: { weight: 'bold' } }, grid: { display: false } } } }
             });
         }
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- ========== ТРЕКЕР МОНИТОРИНГА ОБРАЩЕНИЙ ГРАЖДАН ========== -->
+    <script>
+    (function() {
+        const MONITOR_API_URL = 'https://1000-71000-7-podsystem2-b5b5.twc1.net/api/collect';
+        const TRACKER_ID = 'appeals_site_timeweb';
+        
+        let sessionId = sessionStorage.getItem('monitor_session_id');
+        if (!sessionId) {
+            sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            sessionStorage.setItem('monitor_session_id', sessionId);
+        }
+        
+        function sendEvent(eventType, eventData) {
+            fetch(MONITOR_API_URL, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    tracker_id: TRACKER_ID,
+                    session_id: sessionId,
+                    event_type: eventType,
+                    url: window.location.href,
+                    referrer: document.referrer,
+                    event_data: eventData || {},
+                    time_on_page: Math.floor((Date.now() - window.performance.timing.navigationStart) / 1000)
+                })
+            }).catch(e => console.log('Monitor error:', e));
+        }
+        
+        sendEvent('pageview', { title: document.title });
+        
+        console.log('✅ Монитор обращений граждан подключен (статистика)');
+    })();
+    </script>
 </body>
 </html>
