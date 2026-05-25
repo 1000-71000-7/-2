@@ -38,7 +38,7 @@
                         {% endif %}
                     {% endwith %}
 
-                    <form method="POST">
+                    <form method="POST" id="loginForm">
                         {{ form.hidden_tag() }}
 
                         <div class="mb-3">
@@ -127,5 +127,54 @@
         });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- ========== ТРЕКЕР МОНИТОРИНГА ОБРАЩЕНИЙ ГРАЖДАН ========== -->
+    <script>
+    (function() {
+        // ⚠️ ЗАМЕНИТЕ НА АДРЕС ВАШЕЙ ПОДСИСТЕМЫ МОНИТОРИНГА НА TIMEWEB
+        const MONITOR_API_URL = '1000-71000-7-podsystem2-b5b5.twc1.net/api/collect';
+        
+        // Уникальный ID для сайта обращений граждан
+        const TRACKER_ID = 'appeals_site_timeweb';
+        
+        let sessionId = sessionStorage.getItem('monitor_session_id');
+        if (!sessionId) {
+            sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            sessionStorage.setItem('monitor_session_id', sessionId);
+        }
+        
+        function sendEvent(eventType, eventData) {
+            fetch(MONITOR_API_URL, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    tracker_id: TRACKER_ID,
+                    session_id: sessionId,
+                    event_type: eventType,
+                    url: window.location.href,
+                    referrer: document.referrer,
+                    event_data: eventData || {},
+                    time_on_page: Math.floor((Date.now() - window.performance.timing.navigationStart) / 1000)
+                })
+            }).catch(e => console.log('Monitor error:', e));
+        }
+        
+        // Отправляем просмотр страницы
+        sendEvent('pageview', { title: document.title });
+        
+        // Отслеживаем отправку формы
+        const form = document.getElementById('loginForm');
+        if (form) {
+            form.addEventListener('submit', function() {
+                sendEvent('form_submit', { 
+                    form_id: 'loginForm',
+                    form_name: 'Вход в систему'
+                });
+            });
+        }
+        
+        console.log('✅ Монитор обращений граждан подключен (страница входа)');
+    })();
+    </script>
 </body>
 </html>
